@@ -6,7 +6,7 @@
 /*   By: dde-jesu <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/13 16:09:12 by dde-jesu          #+#    #+#             */
-/*   Updated: 2018/11/14 10:17:20 by dde-jesu         ###   ########.fr       */
+/*   Updated: 2018/11/14 12:43:06 by dde-jesu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@ t_buff		*get_next_line_buff(const int fd)
 {
 	static t_buff	buff;
 
+	(void)fd;
 	return (&buff);
 }
 
@@ -47,7 +48,7 @@ static	int	read_next_buff(const int fd, char **line, int len)
 	else
 		ret = read_next_buff(fd, line, len + r);
 	memcpy(*line + len, buff, r > 0 ? r : 0);
-	return (ret);
+	return (ret ? ret : r != 0);
 }
 
 int			get_next_line(const int fd, char **line)
@@ -56,8 +57,10 @@ int			get_next_line(const int fd, char **line)
 	t_buff	copy;
 	char	*res;
 	int		len;
-	int		r;
+	int		ret;
 
+	if (!line)
+		return (-1);
 	buff = get_next_line_buff(fd);
 	if ((res = memchr(buff->data, '\n', buff->len)))
 	{
@@ -65,15 +68,12 @@ int			get_next_line(const int fd, char **line)
 		*line = malloc(len + 1);
 		(*line)[len] = 0;
 		memcpy(*line, buff->data, len);
-		buff->len -= len;
-		memcpy(buff->data, res + 1, buff->len);
+		memcpy(buff->data, res + 1, buff->len - len);
+		buff->len -= len + 1;
 		return (1);
 	}
-	else
-	{
-		copy = *buff;
-		r = read_next_buff(fd, line, copy.len);
-		memcpy(*line, copy.data, copy.len);
-		return (r);
-	}
+	copy = *buff;
+	ret = read_next_buff(fd, line, copy.len);
+	memcpy(*line, copy.data, copy.len);
+	return (ret ? ret : copy.len != 0);
 }
