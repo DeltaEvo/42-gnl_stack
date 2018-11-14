@@ -6,21 +6,60 @@
 /*   By: dde-jesu <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/13 16:09:12 by dde-jesu          #+#    #+#             */
-/*   Updated: 2018/11/14 12:43:06 by dde-jesu         ###   ########.fr       */
+/*   Updated: 2018/11/14 14:14:34 by dde-jesu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 #include <unistd.h>
-#include <string.h>
+#include <stddef.h>
 #include <stdlib.h>
+
+static void	*ft_memcpy(void *dst, const void *src, size_t n)
+{
+	const char	*c_src = src;
+	char		*c_dst;
+
+	c_dst = dst;
+	while (n--)
+		*c_dst++ = *c_src++;
+	return (dst);
+}
+
+static void	*ft_memchr(const void *s, int c, size_t n)
+{
+	const int		*c_s = s;
+	unsigned char	*b_s;
+	int				repeated_c;
+	int				mask;
+
+	repeated_c = (c & 0xFF) | ((c & 0xFF) << 8);
+	repeated_c |= repeated_c << 16;
+	while (n >= 4)
+	{
+		mask = *c_s++ ^ repeated_c;
+		if ((mask & 0xff) == 0)
+			return ((void *)c_s - 4);
+		if ((mask & 0xff00) == 0)
+			return ((void *)c_s - 3);
+		if ((mask & 0xff0000) == 0)
+			return ((void *)c_s - 2);
+		if ((mask & 0xff000000) == 0)
+			return ((void *)c_s - 1);
+		n -= 4;
+	}
+	b_s = (unsigned char *)c_s;
+	while (n--)
+		if (*b_s++ == (unsigned char)c)
+			return ((void *)b_s - 1);
+	return (NULL);
+}
 
 t_buff		*get_next_line_buff(const int fd)
 {
-	static t_buff	buff;
+	static t_buff	buff[2147483647];
 
-	(void)fd;
-	return (&buff);
+	return (buff + fd);
 }
 
 static	int	read_next_buff(const int fd, char **line, int len)
@@ -31,23 +70,23 @@ static	int	read_next_buff(const int fd, char **line, int len)
 	char	*res;
 	int		ret;
 
-	rbuff = get_next_line_buff(fd);
 	res = buff;
 	r = read(fd, buff, BUFF_SIZE);
 	if (r < 0)
 		ret = -1;
-	else if (r == 0 || (res = memchr(buff, '\n', r)))
+	else if (r == 0 || (res = ft_memchr(buff, '\n', r)))
 	{
 		ret = r != 0;
+		rbuff = get_next_line_buff(fd);
 		rbuff->len = r ? r - (res - buff) - 1 : 0;
-		memcpy(rbuff->data, res + 1, rbuff->len);
+		ft_memcpy(rbuff->data, res + 1, rbuff->len);
 		*line = malloc(len + (res - buff) + 1);
 		(*line)[len + res - buff] = 0;
 		r -= r ? rbuff->len + 1 : 0;
 	}
 	else
 		ret = read_next_buff(fd, line, len + r);
-	memcpy(*line + len, buff, r > 0 ? r : 0);
+	ft_memcpy(*line + len, buff, r > 0 ? r : 0);
 	return (ret ? ret : r != 0);
 }
 
@@ -59,21 +98,21 @@ int			get_next_line(const int fd, char **line)
 	int		len;
 	int		ret;
 
-	if (!line)
+	if (!line || fd < 0)
 		return (-1);
 	buff = get_next_line_buff(fd);
-	if ((res = memchr(buff->data, '\n', buff->len)))
+	if ((res = ft_memchr(buff->data, '\n', buff->len)))
 	{
 		len = res - buff->data;
 		*line = malloc(len + 1);
 		(*line)[len] = 0;
-		memcpy(*line, buff->data, len);
-		memcpy(buff->data, res + 1, buff->len - len);
+		ft_memcpy(*line, buff->data, len);
+		ft_memcpy(buff->data, res + 1, buff->len - len);
 		buff->len -= len + 1;
 		return (1);
 	}
 	copy = *buff;
 	ret = read_next_buff(fd, line, copy.len);
-	memcpy(*line, copy.data, copy.len);
+	ft_memcpy(*line, copy.data, copy.len);
 	return (ret ? ret : copy.len != 0);
 }
