@@ -6,7 +6,7 @@
 /*   By: dde-jesu <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/13 16:09:12 by dde-jesu          #+#    #+#             */
-/*   Updated: 2018/11/14 17:46:38 by dde-jesu         ###   ########.fr       */
+/*   Updated: 2018/11/15 15:02:42 by dde-jesu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,8 +71,7 @@ static	int	read_next_buff(const int fd, char **line, int len)
 	int		ret;
 
 	res = buff;
-	r = read(fd, buff, BUFF_SIZE);
-	if (r < 0)
+	if ((r = read(fd, buff, BUFF_SIZE)) < 0)
 		ret = -1;
 	else if (r == 0 || (res = ft_memchr(buff, '\n', r)))
 	{
@@ -80,13 +79,15 @@ static	int	read_next_buff(const int fd, char **line, int len)
 		rbuff = get_next_line_buff(fd);
 		rbuff->len = r ? r - (res - buff) - 1 : 0;
 		ft_memcpy(rbuff->data, res + 1, rbuff->len);
-		*line = malloc(len + (res - buff) + 1);
+		if (!(*line = malloc(len + (res - buff) + 1)))
+			return (-1);
 		(*line)[len + res - buff] = 0;
 		r -= r ? rbuff->len + 1 : 0;
 	}
 	else
 		ret = read_next_buff(fd, line, len + r);
-	ft_memcpy(*line + len, buff, r > 0 ? r : 0);
+	if (*line)
+		ft_memcpy(*line + len, buff, r > 0 ? r : 0);
 	return (ret ? ret : r != 0);
 }
 
@@ -104,7 +105,8 @@ int			get_next_line(const int fd, char **line)
 	if ((res = ft_memchr(buff->data, '\n', buff->len)))
 	{
 		len = res - buff->data;
-		*line = malloc(len + 1);
+		if (!(*line = malloc(len + 1)))
+			return (-1);
 		(*line)[len] = 0;
 		ft_memcpy(*line, buff->data, len);
 		ft_memcpy(buff->data, res + 1, buff->len - len);
@@ -113,6 +115,7 @@ int			get_next_line(const int fd, char **line)
 	}
 	copy = *buff;
 	ret = read_next_buff(fd, line, copy.len);
-	ft_memcpy(*line, copy.data, copy.len);
+	if (*line)
+		ft_memcpy(*line, copy.data, copy.len);
 	return (ret ? ret : copy.len != 0);
 }
