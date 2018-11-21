@@ -6,7 +6,7 @@
 /*   By: dde-jesu <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/13 16:09:12 by dde-jesu          #+#    #+#             */
-/*   Updated: 2018/11/16 09:46:50 by dde-jesu         ###   ########.fr       */
+/*   Updated: 2018/11/21 10:04:40 by dde-jesu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,21 +65,21 @@ t_buff		*get_next_line_buff(const int fd)
 
 static	int	read_next_buff(const int fd, char **line, int len)
 {
-	t_buff	*rbuff;
-	char	buff[BUFF_SIZE];
-	int		r;
-	char	*res;
-	int		ret;
+	t_buff *const	rbuff = get_next_line_buff(fd);
+	char			buff[BUFF_SIZE];
+	int				r;
+	int				ret;
+	char			*res;
 
 	res = buff;
 	if ((r = read(fd, buff, BUFF_SIZE)) < 0)
-		ret = -1;
+		return (-1);
+	else if (r == 0 && len == 0)
+		return (0);
 	else if (r == 0 || (res = ft_memchr(buff, '\n', r)))
 	{
-		ret = r != 0;
-		rbuff = get_next_line_buff(fd);
 		rbuff->len = r ? r - (res - buff) - 1 : 0;
-		ft_memcpy(rbuff->data, res + 1, rbuff->len);
+		ft_memcpy(rbuff->data, res + (ret = 1), rbuff->len);
 		if (!(*line = malloc(len + (res - buff) + 1)))
 			return (-1);
 		(*line)[len + res - buff] = 0;
@@ -88,8 +88,8 @@ static	int	read_next_buff(const int fd, char **line, int len)
 	else
 		ret = read_next_buff(fd, line, len + r);
 	if (*line)
-		ft_memcpy(*line + len, buff, r > 0 ? r : 0);
-	return (ret ? ret : r != 0);
+		ft_memcpy(*line + len, buff, r);
+	return (ret);
 }
 
 int			get_next_line(const int fd, char **line)
