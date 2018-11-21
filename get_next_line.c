@@ -6,13 +6,12 @@
 /*   By: dde-jesu <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/13 16:09:12 by dde-jesu          #+#    #+#             */
-/*   Updated: 2018/11/21 10:07:36 by dde-jesu         ###   ########.fr       */
+/*   Updated: 2018/11/21 10:23:31 by dde-jesu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 #include <unistd.h>
-#include <stddef.h>
 #include <stdlib.h>
 
 static void	*ft_memcpy(void *dst, const void *src, size_t n)
@@ -86,7 +85,7 @@ static	int	read_next_buff(const int fd, char **line, int len)
 	}
 	else
 		ret = read_next_buff(fd, line, len + r);
-	if (*line)
+	if (*line && ret == 1)
 		ft_memcpy(*line + len, buff, r);
 	return (ret);
 }
