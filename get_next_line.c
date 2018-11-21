@@ -6,13 +6,12 @@
 /*   By: dde-jesu <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/13 16:09:12 by dde-jesu          #+#    #+#             */
-/*   Updated: 2018/11/21 10:04:40 by dde-jesu         ###   ########.fr       */
+/*   Updated: 2018/11/21 10:07:36 by dde-jesu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 #include <unistd.h>
-#include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -58,7 +57,7 @@ static void	*ft_memchr(const void *s, int c, size_t n)
 
 t_buff		*get_next_line_buff(const int fd)
 {
-	static t_buff	buff[OPEN_MAX];
+	static t_buff	buff[2147483648];
 
 	return (buff + fd);
 }
@@ -100,7 +99,7 @@ int			get_next_line(const int fd, char **line)
 	int		len;
 	int		ret;
 
-	if (!line || fd < 0 || fd >= OPEN_MAX)
+	if (!line || fd < 0)
 		return (-1);
 	buff = get_next_line_buff(fd);
 	if ((res = ft_memchr(buff->data, '\n', buff->len)))
